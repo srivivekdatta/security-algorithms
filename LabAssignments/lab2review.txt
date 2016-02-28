@@ -1,0 +1,47 @@
+5 pts
+
+Correctness:
+
+- The program has a compiling error:
+$ javac *.java
+AEScipher.java:11: error: class AES_cipher is public, should be declared in a
+file named AES_cipher.java
+public class AES_cipher {
+       ^
+1 error
+
+
+
+Style:
+
+- Correct indentation
+
+- Poor block comments
+
+- Both files are missing the header. Remember: Each file must have a block
+  comment at the top which gives the name of the file, the student's name, the
+  assignment, the date, the version, and a comment about what is contained in
+  the file. For example:
+/**
+ * file: SinglyLinkedList.java
+ * author: student name
+ * course: CMPT 220
+ * assignment: project 1
+ * due date: August 30, 2003
+ * version: 1.3
+ * 
+ * This file contains the declaration of the SinglyLinkedList abstract data
+ * type.
+ */
+
+
+Efficiency and Other Comments:
+
+- When searching the Sbox or Rcon you are constantly parsing integers. Perhaps
+  it would be more efficient to have them as integers already and save
+  constantly parsing.
+
+- The aescipher.java file is incorrectly named as: AESCipher.java 
+
+
+- Dr. Rivas
