@@ -1,14 +1,13 @@
-/*
+
+/**
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
+ *
+ * @author : Sri Vivek datta Immadisetty
  */
 
-/**
- *
- * @author Admin
- */
-public class AES_cipher {
+public class AEScipher {
 
   private static final String[][] S_BOX = {
     {"63", "7C", "77", "7B", "F2", "6B", "6F", "C5", "30", "01", "67", "2B", "FE", "D7", "AB", "76"},
@@ -46,21 +45,31 @@ public class AES_cipher {
     {"C6", "97", "35", "6A", "D4", "B3", "7D", "FA", "EF", "C5", "91", "39", "72", "E4", "D3", "BD"},
     {"61", "C2", "9F", "25", "4A", "94", "33", "66", "CC", "83", "1D", "3A", "74", "E8", "CB", "8D"}};
 
-  private static String[][] mainKey = new String[4][4];
+  private static final String[][] mainKey = new String[4][4];
   public static String[][] matrixW = new String[4][44];
 
   public static void roundKeys(String input) {
 
     createFirstKey(input);
 
-    //original key will be the first 4 columns of matrixW
+    /**
+     * original key will be the first 4 columns of original matrixW
+     *
+     * @param matrixW the matrix that has the round keys
+     *
+     */
     for (int row = 0; row <= 3; row++) {
       for (int column = 0; column <= 3; column++) {
         matrixW[row][column] = mainKey[row][column];
       }
     }
 
-// creating a new matrix new_w for processing 
+    /**
+     * creating a new matrix for processing
+     *
+     * @param new_w the new matrix on which the XOR operation is done
+     *
+     */
     String[][] new_w = null;
     for (int column = 4; column <= 43; column++) {
 
@@ -85,8 +94,11 @@ public class AES_cipher {
           }
         }
 
-        // XOR the RCON values
-        // to find the number of rounds
+        /**
+         * XOR the RCON values
+         *
+         * @param numRound to find the number of rounds
+         */
         int numRound = column / 4;
         new_w[0][0] = doXOR(R_CON[0][numRound], new_w[0][0]);
 
@@ -95,7 +107,10 @@ public class AES_cipher {
         }
       }
     }
-    // time for printing the round keys
+
+    /**
+     * time for printing the round keys
+     */
     int keys = 1;
     int col = 0;
     while (keys <= 11) {
@@ -110,6 +125,12 @@ public class AES_cipher {
     System.out.println("");
   }
 
+  /**
+   * this matrix reads all the values into the Sbox
+   *
+   * @param in
+   * @return
+   */
   public static String Sbox(String in) {
     int x = Integer.parseInt(in.split("")[0], 16);
     int y = Integer.parseInt(in.split("")[1], 16);
@@ -117,6 +138,13 @@ public class AES_cipher {
     return output;
   }
 
+  /**
+   * doXOR this part does the XOR of val1 and val2
+   *
+   * @param a
+   * @param b
+   * @return
+   */
   public static String doXOR(String a, String b) {
     int val1 = Integer.parseInt(a, 16);
     int val2 = Integer.parseInt(b, 16);
@@ -128,8 +156,13 @@ public class AES_cipher {
     return res;
   }
 
+  /**
+   * values are stored in 4*4 matrix using input
+   *
+   * @param input
+   */
   public static void createFirstKey(String input) {
-    //values are stored in 4*4 matrix using input
+
     int i = 0, row;
     for (int column = 0; column <= 3; column++) {
       for (row = 0; row <= 3; row = row + 1) {
@@ -137,5 +170,92 @@ public class AES_cipher {
         i = i + 2;
       }
     }
+  }
+
+  /**
+   * create the keyHex and sHex matrices which are to be XORed
+   */
+  public static void aesStateXOR() {
+
+    String[][] keyHex = {
+      {"54", "73", "20", "67"},
+      {"68", "20", "4B", "20"},
+      {"61", "6D", "75", "46"},
+      {"74", "79", "6E", "75"}};
+
+    String[][] sHex = {
+      {"54", "4F", "4E", "20"},
+      {"77", "6E", "69", "54"},
+      {"6F", "65", "6E", "77"},
+      {"20", "20", "65", "6F"}};
+
+    String[][] new_matrix = new String[4][4];
+    int col = 0;
+
+    for (int k = 0; k <= 3; k++, col++) {
+      for (int row = 0; row <= 3; row++) {
+        new_matrix[k][row] = doXOR(sHex[k][row], keyHex[k][row]);
+      }
+    }
+
+    for (int row = 0; row <= 3; row++) {
+      for (int k = 0; k <= 3; k++, col++) {
+        System.out.print(new_matrix[row][k] + "\t");
+      }
+      System.out.println();
+    }
+  }
+
+  /**
+   * this method will perform the “Substitution” operation, i.e., the entries of
+   * the output matrix result from running the corresponding input matrix
+   * entries through the AES S-Box.
+   */
+  public static void aesNibblesub() {
+
+    String[][] inStateHex = {
+      {"00", "3C", "6E", "47"},
+      {"1F", "4E", "22", "74"},
+      {"0E", "08", "1B", "31"},
+      {"54", "59", "0B", "1A"}};
+
+    String sOut;
+    String[][] outStateHex = new String[4][4];
+
+    for (int row = 0; row <= 3; row++) {
+      for (int k = 0; k <= 3; k++) {
+        outStateHex[k][row] = Sbox(inStateHex[k][row]);
+      }
+    }
+    for (int row = 0; row <= 3; row++) {
+      for (int k = 0; k <= 3; k++) {
+        System.out.print(outStateHex[row][k] + "\t");
+      }
+      System.out.println();
+    }
+  }
+
+  /**
+   * aesShiftRows will perform the Shift Row operation of the AES to transform
+   * the input state matrix into output state
+   *
+   * @param arr array that has the values
+   * @param cnt the place of the value in the array
+   * @return arr
+   */
+  private int[] aesShiftRows(int[] arr, int cnt) {
+    assert (arr.length == 4);
+    if (cnt % 4 == 0) {
+      return arr;
+    }
+    while (cnt > 0) {
+      int temp = arr[0];
+      for (int i = 0; i < arr.length - 1; i++) {
+        arr[i] = arr[i + 1];
+      }
+      arr[arr.length - 1] = temp;
+      --cnt;
+    }
+    return arr;
   }
 }
