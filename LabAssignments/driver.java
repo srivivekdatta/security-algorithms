@@ -10,14 +10,16 @@ import java.util.Scanner;
  *
  * @author Admin
  */
-public class driver {
+public class Driver {
 
   public static void main(String args[]) {
-
     Scanner sc = new Scanner(System.in);
     String input = sc.nextLine();
-
-    AES_cipher as = new AES_cipher();
+    
+    AEScipher as = new AEScipher();
+    as.aesStateXOR();
+    as.aesNibblesub();
     as.roundKeys(input);
+    
   }
 }
