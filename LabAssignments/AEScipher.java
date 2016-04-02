@@ -43,16 +43,11 @@ public class AEScipher {
     {"08", "10", "20", "40", "80", "1B", "36", "6C", "D8", "AB", "4D", "9A", "2F", "5E", "BC", "63"},
     {"C6", "97", "35", "6A", "D4", "B3", "7D", "FA", "EF", "C5", "91", "39", "72", "E4", "D3", "BD"},
     {"61", "C2", "9F", "25", "4A", "94", "33", "66", "CC", "83", "1D", "3A", "74", "E8", "CB", "8D"}};
-  
-  
-  
-  /**
-   * Implementing Galois multiplication, Rijndael implementations
-   * simply uses pre-calculated lookup tables to perform the byte
-   * multiplication by 2
-   */
 
-  
+  /**
+   * Implementing Galois multiplication, Rijndael implementations simply uses
+   * pre-calculated lookup tables to perform the byte multiplication by 2
+   */
   public static int[][] Multiplicationby2Matrix = {
     {0x00, 0x02, 0x04, 0x06, 0x08, 0x0a, 0x0c, 0x0e, 0x10, 0x12, 0x14, 0x16,
       0x18, 0x1a, 0x1c, 0x1e},
@@ -125,31 +120,19 @@ public class AEScipher {
     {0x0b, 0x08, 0x0d, 0x0e, 0x07, 0x04, 0x01, 0x02, 0x13, 0x10, 0x15, 0x16,
       0x1f, 0x1c, 0x19, 0x1a}};
 
-
   private static final String[][] mainKey = new String[4][4];
   public static String[][] matrixW = new String[4][44];
 
-  public static void roundKeys(String input) {
+  public static String[][] roundKeys(String input) {
 
     createFirstKey(input);
 
-    /**
-     * original key will be the first 4 columns of original matrixW
-     *
-     * @param matrixW the matrix that has the round keys
-     */
     for (int row = 0; row <= 3; row++) {
       for (int column = 0; column <= 3; column++) {
         matrixW[row][column] = mainKey[row][column];
       }
     }
 
-    /**
-     * creating a new matrix for processing
-     *
-     * @param new_w the new matrix on which the XOR operation is done
-     *
-     */
     String[][] new_w = null;
     for (int column = 4; column <= 43; column++) {
 
@@ -174,11 +157,6 @@ public class AEScipher {
           }
         }
 
-        /**
-         * XOR the RCON values
-         *
-         * @param numRound to find the number of rounds
-         */
         int numRound = column / 4;
         new_w[0][0] = doXOR(R_CON[0][numRound], new_w[0][0]);
 
@@ -187,22 +165,7 @@ public class AEScipher {
         }
       }
     }
-
-    /**
-     * time for printing the round keys
-     */
-    int keys = 1;
-    int col = 0;
-    while (keys <= 11) {
-      for (int k = 0; k <= 3; k++, col++) {
-        for (int row = 0; row <= 3; row++) {
-          System.out.print(matrixW[row][col]);
-        }
-      }
-      System.out.println();
-      keys++;
-    }
-    System.out.println("");
+    return matrixW;
   }
 
   /**
@@ -252,22 +215,60 @@ public class AEScipher {
     }
   }
 
+  public void rounds(String key, String text) {
+    int i = 0;
+    String[][] output = new String[4][4];
+    String[][] roundKey = new String[4][4];
+    for (int column = 0; column <= 3; column++) {
+      for (int row = 0; row <= 3; row = row + 1) {
+        output[row][column] = text.substring(i, i + 2);
+        i = i + 2;
+      }
+    }
+
+    roundKeys(key);
+    int a = 0;
+    int b = 0;
+
+    while (a < 44) {
+      for (int j = 0; j < 4; j++, a++) {
+        for (int k = 0; k < 4; k++) {
+          roundKey[k][j] = matrixW[k][a];
+        }
+      }
+
+      if (b != 10) {
+        b++;
+        output = aesStateXOR(roundKey, output);
+
+        output = aesNibblesub(output);
+
+        output = aesShiftRow(output);
+
+        if (b != 10) {
+          output = aesMixColumn(output);
+        }
+      } else {
+        output = aesStateXOR(output, roundKey);
+      }
+
+    }
+    for (int cols = 0; cols < 4; cols++) {
+      for (int row = 0; row < 4; row++) {
+        System.out.print(output[row][cols]);
+      }
+    }
+
+  }
+
   /**
    * create the keyHex and sHex matrices which are to be XORed
+   *
+   * @param keyHex
+   * @param sHex
+   * @return
    */
-  public static void aesStateXOR() {
-
-    String[][] keyHex = {
-      {"54", "73", "20", "67"},
-      {"68", "20", "4B", "20"},
-      {"61", "6D", "75", "46"},
-      {"74", "79", "6E", "75"}};
-
-    String[][] sHex = {
-      {"54", "4F", "4E", "20"},
-      {"77", "6E", "69", "54"},
-      {"6F", "65", "6E", "77"},
-      {"20", "20", "65", "6F"}};
+  public static String[][] aesStateXOR(String[][] keyHex, String[][] sHex) {
 
     String[][] new_matrix = new String[4][4];
     int col = 0;
@@ -277,28 +278,15 @@ public class AEScipher {
         new_matrix[k][row] = doXOR(sHex[k][row], keyHex[k][row]);
       }
     }
-
-    for (int row = 0; row <= 3; row++) {
-      for (int k = 0; k <= 3; k++, col++) {
-        System.out.print(new_matrix[row][k] + "\t");
-      }
-      System.out.println();
-    }
+    return new_matrix;
   }
 
   /**
-   * this method will perform the “Substitution” operation, i.e., the entries of
+   * this method will perform the Substitution operation, i.e., the entries of
    * the output matrix result from running the corresponding input matrix
    * entries through the AES S-Box.
    */
-  public static void aesNibblesub() {
-
-    String[][] inStateHex = {
-      {"00", "3C", "6E", "47"},
-      {"1F", "4E", "22", "74"},
-      {"0E", "08", "1B", "31"},
-      {"54", "59", "0B", "1A"}};
-
+  public static String[][] aesNibblesub(String[][] inStateHex) {
     String sOut;
     String[][] outStateHex = new String[4][4];
 
@@ -307,12 +295,7 @@ public class AEScipher {
         outStateHex[k][row] = Sbox(inStateHex[k][row]);
       }
     }
-    for (int row = 0; row <= 3; row++) {
-      for (int k = 0; k <= 3; k++) {
-        System.out.print(outStateHex[row][k] + "\t");
-      }
-      System.out.println();
-    }
+    return outStateHex;
   }
 
   /**
@@ -323,26 +306,20 @@ public class AEScipher {
    * @param cnt the place of the value in the array
    * @return array
    */
-  private int[] aesShiftRow(int[] arr, int cnt) {
-    assert (arr.length == 4);
-    if (cnt % 4 == 0) {
-      return arr;
-    }
-    while (cnt > 0) {
-      int temp = arr[0];
-      for (int i = 0; i < arr.length - 1; i++) {
-        arr[i] = arr[i + 1];
+  private String[][] aesShiftRow(String[][] inStateHex) {
+    String[][] outStateHex = new String[4][4];
+    int cnt = 0;
+    for (int i = 0; i < 4; i++) {
+      for (int j = 0; j < 4; j++) {
+        outStateHex[i][j] = inStateHex[i][(j + cnt) % 4];
       }
-      arr[arr.length - 1] = temp;
-      --cnt;
+      cnt++;
     }
-    return arr;
+    return outStateHex;
   }
-  
-  
+
   /**
-   * aesMixColumn uses mixColMat's inputs and gives the result
-   * matrix.
+   * aesMixColumn uses mixColMat's inputs and gives the result matrix.
    *
    */
   public static int[][] mixColumnMatrix = {{0x02, 0x03, 0x01, 0x01},
@@ -350,9 +327,8 @@ public class AEScipher {
   {0x03, 0x01, 0x01, 0x02}};
 
   /**
-   * The aesMixColumn function takes input as four bytes 
-   * and outputs four bytes, where each 
-   * input byte affects all four output bytes.
+   * The aesMixColumn function takes input as four bytes and outputs four bytes,
+   * where each input byte affects all four output bytes.
    *
    *
    * @param k it is the key
@@ -376,11 +352,11 @@ public class AEScipher {
   /**
    * mixColumnAddition
    *
-   * In Rijndael's Galois field, the addition is
-   * actually an XOR operation, and then multiplication.
+   * In Rijndael's Galois field, the addition is actually an XOR operation, and
+   * then multiplication.
    *
    *
-   * @param Key 
+   * @param Key
    * @param mixcolumn
    * @param i
    * @param j
@@ -397,8 +373,7 @@ public class AEScipher {
     String result = String.format("%02x", sum);
     return result.toUpperCase();
   }
-  
-  
+
   /*
    * mixColumnMultiplication
    * 

@@ -8,18 +8,21 @@ import java.util.Scanner;
 
 /**
  *
- * @author Admin
+ * @author Sri
  */
 public class Driver {
 
   public static void main(String args[]) {
     Scanner sc = new Scanner(System.in);
-    String input = sc.nextLine();
-    
+    String key = sc.nextLine();
+    String text= "";
+    if (sc.hasNextLine())
+      text = sc.nextLine();
     AEScipher as = new AEScipher();
-    as.aesStateXOR();
-    as.aesNibblesub();
-    as.roundKeys(input);
+    as.rounds(key,text);
+    //as.aesStateXOR();
+    //as.aesNibblesub();
+    //as.roundKeys(input);
     
   }
 }
